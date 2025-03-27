@@ -1,37 +1,29 @@
-# go-fanotify - 高性能Linux文件系统监控库
+# go-fanotify - High-Performance Linux Filesystem Monitoring Library
 
-# go-fanotify
+## go-fanotify
 
-`go-fanotify` 是一个 Go 语言封装的 `fanotify` 监控库，用于高效监听 Linux 文件系统事件，尤其适用于大规模目录监控。相比 `inotify`，`fanotify` 能够以更少的资源占用监视整个挂载点或指定目录。
+`go-fanotify` is a Go language wrapper for the `fanotify` monitoring library, designed for efficient Linux filesystem event listening. It is particularly useful for large-scale directory monitoring. Compared to `inotify`, `fanotify` can monitor an entire mount point or a specified directory with lower resource consumption.
 
-## 特性
-- 低资源占用，适用于大目录
-- 支持多个目录同时监听
-- 提供 Go 语言 API，方便集成
+## Features
+- Low resource usage, suitable for large directories
+- Supports monitoring multiple directories simultaneously
+- Provides a Go API for easy integration
 
+### fanotify Details
+[fanotify man page](https://man7.org/linux/man-pages/man7/fanotify.7.html)
 
-### fanotify细节
-https://man7.org/linux/man-pages/man7/fanotify.7.html
+## Why Choose `fanotify`?
 
+| Feature               | go-fanotify               | Traditional inotify      |  
+|-----------------------|--------------------------|--------------------------|  
+| **Monitoring Scope**  | Covers entire mount point | Requires recursive addition of subdirectories |  
+| **Kernel Resource Usage** | O(1) constant consumption | O(n) linear growth |  
+| **Monitoring Millions of Files** | Single monitor point | Requires thousands of inotify watches |  
+| **Dynamic Subdirectories** | Automatically includes newly created subdirectories | Must be manually tracked and added |  
+| **Event Latency** | ~0.5ms on average | 2-5ms on average |  
 
-
-
-## 为什么选择 `fanotify`？
-
-
-| 特性                  | go-fanotify               | 传统inotify              |
-|-----------------------|---------------------------|--------------------------|
-| **监控范围**          | 挂载点级别自动覆盖         | 需递归添加每个子目录      |
-| **内核资源占用**      | O(1) 恒定消耗             | O(n) 线性增长            |
-| **百万文件监控**      | 1个监控点搞定             | 需要数万个inotify watch   |
-| **动态子目录**        | 自动包含新创建的子目录     | 需要手动跟踪添加          |
-| **事件延迟**          | 平均0.5ms                 | 平均2-5ms               |
-
-
-相比 `inotify`，`fanotify` 适用于更大规模的目录监控，原因包括：
-- `inotify` 需要递归监听目录，而 `fanotify` 可直接监听整个挂载点。
-- `fanotify` 事件处理成本更低。
-- 适用于需要监听文件访问和修改的安全审计、缓存清理等场景。
-
-
-
+### Advantages Over `inotify`
+Compared to `inotify`, `fanotify` is more suitable for large-scale directory monitoring due to:
+- `inotify` requiring recursive directory monitoring, while `fanotify` can directly watch an entire mount point.
+- Lower event processing overhead with `fanotify`.
+- Ideal for use cases such as security auditing, cache invalidation, and file access monitoring.  
