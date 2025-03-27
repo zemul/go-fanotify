@@ -65,6 +65,7 @@ func (n *Notifier) AddWatch(paths []string, events EventSet) error {
 		if err != nil {
 			return fmt.Errorf("fanotify_mark failed: %w", err)
 		}
+		n.mounted[mountPoint] = true
 	}
 	return nil
 }
