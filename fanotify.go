@@ -54,7 +54,7 @@ func (n *Notifier) AddWatch(paths []string, events EventSet) error {
 			continue
 		}
 
-		err = unix.FanotifyMark(fd,
+		err = unix.FanotifyMark(n.fd,
 			unix.FAN_MARK_ADD|unix.FAN_MARK_MOUNT,
 			events.Mask(),
 			unix.AT_FDCWD,
@@ -74,7 +74,7 @@ func (n *Notifier) ReadEvents() <-chan Event {
 		buf := make([]byte, 4096)
 
 		for {
-			n, err := unix.Read(n.fd, buf)
+			_, err := unix.Read(n.fd, buf)
 			if err != nil {
 				ch <- Event{Err: err}
 				return
@@ -89,7 +89,7 @@ func (n *Notifier) ReadEvents() <-chan Event {
 			event.PID = meta.Pid
 			if meta.Fd >= 0 {
 				event.Path = getPathFromFD(meta.Fd)
-				unix.Close(meta.Fd)
+				unix.Close(int(meta.Fd))
 			}
 
 			ch <- event
