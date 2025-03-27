@@ -2,35 +2,28 @@ package main
 
 import (
 	"fmt"
-	"github.com/zemul/go-fanotify"
+	gofanotify "github.com/zemul/go-fanotify"
 	"log"
 	"os"
 	"os/signal"
 )
 
 func main() {
-	fanotify.
-		fanotify.NewEventSet()
-	fanotify.
-		notifier, err := fanotify.New()
+	notifier, err := gofanotify.New()
 	if err != nil {
-		log.Fatalf("初始化失败: %v", err)
+		log.Fatalf("init: %v", err)
 	}
 	defer notifier.Close()
-	// 2. 添加监控 (示例监控/tmp)
-	err = notifier.AddWatch("/tmp",
-		unix.FAN_OPEN|
-			unix.FAN_MODIFY|
-			unix.FAN_CLOSE_WRITE)
+
+	eventSet := gofanotify.NewEventSet(gofanotify.FileWriteComplete)
+	err = notifier.AddWatch([]string{"/tmp"}, eventSet)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 3. 处理信号
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
-	// 4. 事件循环
 	eventCh := notifier.ReadEvents()
 	for {
 		select {
@@ -42,24 +35,24 @@ func main() {
 			fmt.Printf("[%d] %s event: %v\n",
 				event.PID,
 				event.Path,
-				maskToString(event.Mask))
-
+				eventToString(event))
 		case <-sig:
 			return
 		}
 	}
 }
 
-func maskToString(mask uint64) string {
+func eventToString(event gofanotify.Event) string {
 	var s []string
-	if mask&unix.FAN_OPEN != 0 {
+	if event.Closed {
+		s = append(s, "CLOSE_WRITE")
+	}
+	if event.Opened {
 		s = append(s, "OPEN")
 	}
-	if mask&unix.FAN_MODIFY != 0 {
+	if event.Modified {
 		s = append(s, "MODIFY")
-	}
-	if mask&unix.FAN_CLOSE_WRITE != 0 {
-		s = append(s, "CLOSE_WRITE")
+
 	}
 	return fmt.Sprintf("%v", s)
 }
