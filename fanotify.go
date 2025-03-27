@@ -92,7 +92,12 @@ func (n *Notifier) ReadEvents() <-chan Event {
 				unix.Close(int(meta.Fd))
 			}
 
-			ch <- event
+			for _, prefix := range n.path {
+				if isUnderTargetDir(event.Path, prefix) {
+					ch <- event
+				}
+			}
+
 		}
 	}()
 	return ch
