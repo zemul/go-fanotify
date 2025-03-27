@@ -1,4 +1,4 @@
-module github.com/zemul/go-fanotify/fanotify
+module github.com/zemul/go-fanotify
 
 go 1.23.4
 

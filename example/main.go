@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/zemul/go-fanotify"
-	"github.com/zemul/go-fanotify/fanotify"
 	"log"
 	"os"
 	"os/signal"
