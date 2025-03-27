@@ -51,6 +51,6 @@ func (es EventSet) Mask() uint64   { return es.mask }
 func (es EventSet) String() string { return strings.Join(es.names, "|") }
 
 var (
-	WriteComplete = NewEventSet(FileWriteComplete, FileModified)
+	WriteComplete = NewEventSet(FileWriteComplete)
 	AllOps        = NewEventSet(FileWriteComplete, FileModified, FileOpened, DirCreated)
 )
