@@ -1,3 +1,5 @@
+[中文](https://github.com/zemul/go-fanotify/blob/master/README_CN.md)
+[English](https://github.com/zemul/go-fanotify/blob/master/README.md)
 # go-fanotify - High-Performance Linux Filesystem Monitoring Library
 
 ## go-fanotify
