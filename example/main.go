@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/zemul/go-fanotify"
 	"github.com/zemul/go-fanotify/fanotify"
 	"log"
 	"os"
@@ -9,7 +10,10 @@ import (
 )
 
 func main() {
-	notifier, err := fanotify.New()
+	fanotify.
+		fanotify.NewEventSet()
+	fanotify.
+		notifier, err := fanotify.New()
 	if err != nil {
 		log.Fatalf("初始化失败: %v", err)
 	}

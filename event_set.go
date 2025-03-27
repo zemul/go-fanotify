@@ -1,4 +1,4 @@
-package fanotify
+package go_fanotify
 
 import (
 	"golang.org/x/sys/unix"
