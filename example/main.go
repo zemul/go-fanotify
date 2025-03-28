@@ -43,13 +43,14 @@ func main() {
 
 func eventToString(event gofanotify.Event) string {
 	var s []string
-	if event.Closed {
+
+	if event.Mask&gofanotify.FAN_CLOSE_WRITE != 0 {
 		s = append(s, "CLOSE_WRITE")
 	}
-	if event.Opened {
+	if event.Mask&gofanotify.FAN_OPEN != 0 {
 		s = append(s, "OPEN")
 	}
-	if event.Modified {
+	if event.Mask&gofanotify.FAN_MODIFY != 0 {
 		s = append(s, "MODIFY")
 
 	}

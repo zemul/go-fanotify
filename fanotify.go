@@ -47,7 +47,7 @@ func New() (*Notifier, error) {
 }
 
 // AddWatch Adding a monitoring path
-func (n *Notifier) AddWatch(paths []string, mask uint32) error {
+func (n *Notifier) AddWatch(paths []string, mask uint64) error {
 	for _, path := range paths {
 		absPath, err := filepath.Abs(path)
 		if err != nil {
