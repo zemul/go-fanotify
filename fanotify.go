@@ -9,20 +9,25 @@ import (
 )
 
 const (
-	EventFileWriteComplete = unix.FAN_CLOSE_WRITE // 文件写入完成
-	EventFileModified      = unix.FAN_MODIFY      // 文件内容修改
-	EventFileOpened        = unix.FAN_OPEN        // 文件打开
-	EventFileAccessed      = unix.FAN_ACCESS      // 文件读取
-
-	// 目录操作事件
-	EventDirCreated = unix.FAN_CREATE   // 目录/文件创建
-	EventDirMoved   = unix.FAN_MOVED_TO // 目录/文件移动至
-	EventDirDeleted = unix.FAN_DELETE   // 目录/文件删除
-
-	// 组合事件
-	EventAllWrites = EventFileWriteComplete | EventFileModified
-	EventAllOps    = EventFileWriteComplete | EventFileModified | EventFileOpened | EventDirCreated
+	FAN_OPEN          = unix.FAN_OPEN
+	FAN_ACCESS        = unix.FAN_ACCESS
+	FAN_MODIFY        = unix.FAN_MODIFY
+	FAN_CLOSE_WRITE   = unix.FAN_CLOSE_WRITE
+	FAN_CLOSE_NOWRITE = unix.FAN_CLOSE_NOWRITE
+	FAN_CREATE        = unix.FAN_CREATE
+	FAN_DELETE        = unix.FAN_DELETE
+	FAN_MOVED_FROM    = unix.FAN_MOVED_FROM
+	FAN_MOVED_TO      = unix.FAN_MOVED_TO
+	FAN_OPEN_EXEC     = unix.FAN_OPEN_EXEC
+	FAN_OPEN_PERM     = unix.FAN_OPEN_PERM
 )
+
+type Event struct {
+	Path string `json:"path"`
+	PID  int32  `json:"pid"`
+	Mask uint64 `json:"mask"`
+	Err  error  `json:"-"`
+}
 
 type Notifier struct {
 	mounted map[string]bool
@@ -42,7 +47,7 @@ func New() (*Notifier, error) {
 }
 
 // AddWatch Adding a monitoring path
-func (n *Notifier) AddWatch(paths []string, events EventSet) error {
+func (n *Notifier) AddWatch(paths []string, mask uint32) error {
 	for _, path := range paths {
 		absPath, err := filepath.Abs(path)
 		if err != nil {
@@ -56,7 +61,7 @@ func (n *Notifier) AddWatch(paths []string, events EventSet) error {
 
 		err = unix.FanotifyMark(n.fd,
 			unix.FAN_MARK_ADD|unix.FAN_MARK_MOUNT,
-			events.Mask(),
+			mask,
 			unix.AT_FDCWD,
 			mountPoint)
 		if err != nil {
@@ -85,8 +90,10 @@ func (n *Notifier) ReadEvents() <-chan Event {
 				ch <- Event{Err: fmt.Errorf("metadata version mismatch")}
 				continue
 			}
-			event := parseMask(meta.Mask)
-			event.PID = meta.Pid
+			event := Event{
+				PID:  meta.Pid,
+				Mask: meta.Mask,
+			}
 			if meta.Fd >= 0 {
 				event.Path = getPathFromFD(meta.Fd)
 				unix.Close(int(meta.Fd))
@@ -95,6 +102,7 @@ func (n *Notifier) ReadEvents() <-chan Event {
 			for _, prefix := range n.path {
 				if isUnderTargetDir(event.Path, prefix) {
 					ch <- event
+					break
 				}
 			}
 
@@ -105,18 +113,4 @@ func (n *Notifier) ReadEvents() <-chan Event {
 
 func (n *Notifier) Close() error {
 	return unix.Close(n.fd)
-}
-
-func parseMask(mask uint64) Event {
-	return Event{
-		Opened:     mask&unix.FAN_OPEN != 0,
-		Accessed:   mask&unix.FAN_ACCESS != 0,
-		Modified:   mask&unix.FAN_MODIFY != 0,
-		Closed:     mask&(unix.FAN_CLOSE_WRITE|unix.FAN_CLOSE_NOWRITE) != 0,
-		Created:    mask&unix.FAN_CREATE != 0,
-		Deleted:    mask&unix.FAN_DELETE != 0,
-		Moved:      mask&(unix.FAN_MOVED_FROM|unix.FAN_MOVED_TO) != 0,
-		Executable: mask&unix.FAN_OPEN_EXEC != 0,
-		Permitted:  mask&unix.FAN_OPEN_PERM != 0,
-	}
 }

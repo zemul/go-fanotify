@@ -15,8 +15,7 @@ func main() {
 	}
 	defer notifier.Close()
 
-	eventSet := gofanotify.NewEventSet(gofanotify.FileWriteComplete)
-	err = notifier.AddWatch([]string{"/tmp"}, eventSet)
+	err = notifier.AddWatch([]string{"/tmp"}, gofanotify.FAN_CLOSE_WRITE)
 	if err != nil {
 		log.Fatal(err)
 	}
