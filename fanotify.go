@@ -18,6 +18,7 @@ const (
 	FAN_DELETE        = unix.FAN_DELETE
 	FAN_MOVED_FROM    = unix.FAN_MOVED_FROM
 	FAN_MOVED_TO      = unix.FAN_MOVED_TO
+	FAN_MOVE_SELF     = unix.FAN_MOVE_SELF
 	FAN_OPEN_EXEC     = unix.FAN_OPEN_EXEC
 	FAN_OPEN_PERM     = unix.FAN_OPEN_PERM
 )
