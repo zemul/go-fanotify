@@ -77,34 +77,53 @@ func (n *Notifier) ReadEvents() <-chan Event {
 	ch := make(chan Event, 4096)
 	go func() {
 		defer close(ch)
-		buf := make([]byte, 4096)
+		buf := make([]byte, 16*1024)
 
 		for {
-			_, err := unix.Read(n.fd, buf)
+			readLen, err := unix.Read(n.fd, buf)
 			if err != nil {
 				ch <- Event{Err: err}
 				return
 			}
 
-			meta := (*unix.FanotifyEventMetadata)(unsafe.Pointer(&buf[0]))
-			if meta.Vers != unix.FANOTIFY_METADATA_VERSION {
-				ch <- Event{Err: fmt.Errorf("metadata version mismatch")}
-				continue
-			}
-			event := Event{
-				PID:  meta.Pid,
-				Mask: meta.Mask,
-			}
-			if meta.Fd >= 0 {
-				event.Path = getPathFromFD(meta.Fd)
-				unix.Close(int(meta.Fd))
-			}
+			offset := 0
+			for offset < readLen {
+				meta := (*unix.FanotifyEventMetadata)(unsafe.Pointer(&buf[offset]))
 
-			for _, prefix := range n.path {
-				if isUnderTargetDir(event.Path, prefix) {
-					ch <- event
+				if meta.Event_len == 0 {
 					break
 				}
+
+				if meta.Vers != unix.FANOTIFY_METADATA_VERSION {
+					ch <- Event{Err: fmt.Errorf("metadata version mismatch")}
+					break
+				}
+
+				if meta.Mask&unix.FAN_Q_OVERFLOW != 0 {
+					ch <- Event{Err: fmt.Errorf("fanotify queue overflow")}
+					offset += int(meta.Event_len)
+					continue
+				}
+
+				// 构造事件
+				event := Event{
+					PID:  meta.Pid,
+					Mask: meta.Mask,
+				}
+
+				if meta.Fd >= 0 {
+					event.Path = getPathFromFD(meta.Fd)
+					unix.Close(int(meta.Fd))
+				}
+
+				for _, prefix := range n.path {
+					if isUnderTargetDir(event.Path, prefix) {
+						ch <- event
+						break
+					}
+				}
+
+				offset += int(meta.Event_len)
 			}
 
 		}
