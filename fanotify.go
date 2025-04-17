@@ -74,7 +74,7 @@ func (n *Notifier) AddWatch(paths []string, mask uint64) error {
 }
 
 func (n *Notifier) ReadEvents() <-chan Event {
-	ch := make(chan Event, 100)
+	ch := make(chan Event, 4096)
 	go func() {
 		defer close(ch)
 		buf := make([]byte, 4096)
